@@ -1,7 +1,7 @@
 import gym
 from gym import spaces
 from gym_minigrid.minigrid import OBJECT_TO_IDX, COLOR_TO_IDX
-
+import numpy as np
 max_env_steps = 50
 
 class FlatObsWrapper(gym.core.ObservationWrapper):
@@ -22,7 +22,7 @@ class FlatObsWrapper(gym.core.ObservationWrapper):
         )
         self.unwrapped.max_steps = max_env_steps
 
-    def gen_obs(self):
+    def observation(self, obs):
         # this method is called in the step() function to get the observation
         # we provide code that gets the grid state and places the agent in it
         env = self.unwrapped
@@ -34,8 +34,7 @@ class FlatObsWrapper(gym.core.ObservationWrapper):
         ])
         full_grid = full_grid[1:-1, 1:-1]   # remove outer walls of the environment (for efficiency)
         flattened_grid = full_grid.flatten()
-
-        return flattened_grid
+        return flattened_grid, env.agent_dir
 
     def render(self, *args, **kwargs):
         """This removes the default visualization of the partially observable field of view."""
