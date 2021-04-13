@@ -37,9 +37,11 @@ def train(maze_env, model_dir, num_episode, max_episode_length, lr,
 
     # create value function and q value function
     q_value_function = {}
+    visited_actions = {}
     visited_states = set()
     q_value_function = defaultdict(lambda: 0, q_value_function)
-
+    visited_actions = defaultdict(lambda: [False]*maze_env.action_space.n, visited_actions)
+    print(maze_env.action_space.n)
     # train agent
     start = time.time()
     episodes_length = []
@@ -49,13 +51,23 @@ def train(maze_env, model_dir, num_episode, max_episode_length, lr,
     for _ in range(num_episode):
         current_length = 0
         is_terminal = 0
-        state = maze_env.reset()
+        obs = maze_env.reset()
+        state = str(maze_env)
         while not is_terminal and (current_length < max_episode_length):
-            visited_states.add(hash_state(state))
-            action, _ = get_max_action(state, q_value_function, maze_env)
+            visited_states.add(state)
             if random.random() <= eps:
                 action = random.randint(0, maze_env.action_space.n - 1)
-            next_state, reward, is_terminal, info = maze_env.step(action)
+            else:
+                action, value = get_max_action(state, q_value_function, maze_env)
+                if value == 0:
+                    if False in visited_actions[state]:
+                        action = visited_actions[state].index(False)
+                    else:
+                        action = random.randint(0, maze_env.action_space.n - 1)
+            visited_actions[state][action] = True
+
+            next_obs, reward, is_terminal, info = maze_env.step(action)
+            next_state = str(maze_env)
             current_length += 1
             next_action, next_q_value = get_max_action(next_state, q_value_function, maze_env)
             max_q_value_target = reward + discount*next_q_value
@@ -83,7 +95,9 @@ def train(maze_env, model_dir, num_episode, max_episode_length, lr,
     fieldnames = ['state', 'action']
     writer = csv.DictWriter(file, fieldnames=fieldnames)
     for state in visited_states:
-        action, value = get_max_action(state, q_value_function, maze_env, hash=False)
+        action, value = get_max_action(state, q_value_function, maze_env)
+        if value == 0:
+            action = -1
         writer.writerow({'state':state, 'action':action})
     file.close()
 
@@ -99,8 +113,9 @@ def main():
     maze_env = utils.FlatObsWrapper(utils.make_env(args.env, args.seed + 10000))
     print('Environment Loaded\n')
 
-    model_dir = utils.get_model_dir(args.env + '/aQL/lr%.2f_discount%.2f_eps%.2f'%(args.lr, args.discount, args.eps))
+    model_dir = utils.get_model_dir(args.env + '/aQL/lr%.2f_discount%.2f_eps%.2f/%d'%(args.lr, args.discount, args.eps, args.num_episode))
     os.makedirs(model_dir, exist_ok=True)
+    print(model_dir)
     # train agent
     train(maze_env, model_dir, **vars(args))
 
