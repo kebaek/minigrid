@@ -174,10 +174,10 @@ class ThreeDoorsEnv(MiniGridEnv):
         self.grid.set(2,6, Key('pink'))
 
         #Place keys
-        self.grid.set(3,2, Door('purple'))
-        self.grid.set(6,2, Door('light green'))
-        self.grid.set(5,4, Door('blue'))
-        self.grid.set(6,6, Door('pink'))
+        self.grid.set(3,2, Door('purple', is_locked=True))
+        self.grid.set(6,2, Door('light green', is_locked=True))
+        self.grid.set(5,4, Door('blue', is_locked=True))
+        self.grid.set(6,6, Door('pink', is_locked=True))
 
         self.mission = "get to the green goal square"
 
@@ -302,11 +302,11 @@ class FourDoorsEnv(MiniGridEnv):
         self.grid.set(2,6, Key('pink'))
 
         #Place keys
-        self.grid.set(1,3, Door('orange'))
-        self.grid.set(3,2, Door('purple'))
-        self.grid.set(6,2, Door('light green'))
-        self.grid.set(5,4, Door('blue'))
-        self.grid.set(6,6, Door('pink'))
+        self.grid.set(1,3, Door('orange',is_locked=True))
+        self.grid.set(3,2, Door('purple',is_locked=True))
+        self.grid.set(6,2, Door('light green',is_locked=True))
+        self.grid.set(5,4, Door('blue',is_locked=True))
+        self.grid.set(6,6, Door('pink',is_locked=True))
 
         self.mission = "get to the green goal square"
 

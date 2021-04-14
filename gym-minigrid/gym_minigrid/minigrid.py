@@ -238,7 +238,6 @@ class Door(WorldObj):
                 self.is_open = True
                 return True
             return False
-
         #self.is_open = not self.is_open
         return False
 
