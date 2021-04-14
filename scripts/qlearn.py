@@ -41,7 +41,6 @@ def train(maze_env, model_dir, num_episode, max_episode_length, lr,
     visited_states = set()
     q_value_function = defaultdict(lambda: 0, q_value_function)
     visited_actions = defaultdict(lambda: [False]*maze_env.action_space.n, visited_actions)
-    print(maze_env.action_space.n)
     # train agent
     start = time.time()
     episodes_length = []

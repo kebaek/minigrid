@@ -229,9 +229,6 @@ class ThreeDoorsEnv(MiniGridEnv):
         else:
             assert False, "unknown action"
 
-        if self.step_count >= self.max_steps:
-            done = True
-
         #obs = self.gen_obs()
 
         return None, reward, done, {}
@@ -360,9 +357,6 @@ class FourDoorsEnv(MiniGridEnv):
                     reward = 5
         else:
             assert False, "unknown action"
-
-        if self.step_count >= self.max_steps:
-            done = True
 
         #obs = self.gen_obs()
 

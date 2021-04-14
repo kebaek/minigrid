@@ -27,6 +27,7 @@ parser.add_argument('--seed', type=int, default=0,
                     help='random seed for environment')
 parser.add_argument("--pause", type=float, default=0.1,
                     help="pause duration between two consequent actions of the agent (default: 0.1)")
+parser.add_argument("--visualize", default=False, action='store_true')
 
 args = parser.parse_args()
 
@@ -55,7 +56,8 @@ if args.gif:
    frames = []
 
 # Create a window to view the environment
-env.render('human')
+if args.visualize:
+    env.render('human')
 
 
 # Run agent
@@ -68,7 +70,8 @@ total_reward  = 0
 obs = env.reset()
 state = str(env)
 while not is_terminal and (current_length < args.max_episode_length):
-    env.render('human')
+    if args.visualize:
+        env.render('human')
     if args.gif:
         frames.append(np.moveaxis(env.render("rgb_array"), 2, 0))
     action = policy[state]
