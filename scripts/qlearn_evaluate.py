@@ -89,7 +89,7 @@ print('total reward: %d'%total_reward)
 file = open(model_dir + '/log.csv', "a+")
 fieldnames = ['training episodes', 'completed', 'reward', 'steps to completion', 'seed']
 writer = csv.DictWriter(file, fieldnames=fieldnames)
-writer.writerow({'training episodes':args.num_episode, 'seed': args.seed, 'reward':total_reward, 'steps to completion':current_length, 'completed': is_terminal})
+writer.writerow({'training episodes':args.num_episode, 'seed': args.seed, 'reward':total_reward, 'steps to completion':current_length, 'completed': int(is_terminal)})
 
 if args.gif:
     print("Saving gif... ", end="")
