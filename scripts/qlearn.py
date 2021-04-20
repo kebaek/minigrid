@@ -17,7 +17,7 @@ def parse_arguments():
                         help='name of the environment')
     parser.add_argument('--num_episode', type=int, default=2000,
                         help='the number of train episodes')
-    parser.add_argument('--max_episode_length', type=int, default=10000,
+    parser.add_argument('--max_episode_length', type=int, default=200,
                         help='the maximum of the length of an episode')
     parser.add_argument('--lr', type=float, default=0.1,
                         help='the learning rate of the q learning algorithm')

@@ -19,7 +19,7 @@ parser.add_argument("--dir", required=True,
                     help="name of the directory to episodes")
 parser.add_argument("--num_episode", required=True, type=int,
                     help="number of episodes")
-parser.add_argument("--max_episode_length",type=int, default=10000,
+parser.add_argument("--max_episode_length",type=int, default=200,
                         help='max episode length')
 parser.add_argument("--gif", type=str, default=None,
                     help="store output as gif with the given filename")
@@ -83,13 +83,13 @@ while not is_terminal and (current_length < args.max_episode_length):
     total_reward += reward
     state = next_state
 
-print("Policy takes:")
-print(current_length)
-print(total_reward)
-file = open(model_dir + '/log.csv', "w+")
-fieldnames = ['episodes', 'reward', 'steps to completion']
+print('reaches winning state:' + str(is_terminal))
+print('total steps: %d'%current_length)
+print('total reward: %d'%total_reward)
+file = open(model_dir + '/log.csv', "a+")
+fieldnames = ['training episodes', 'completed', 'reward', 'steps to completion']
 writer = csv.DictWriter(file, fieldnames=fieldnames)
-writer.writerow({'episodes':args.num_episode, 'reward':total_reward, 'steps to completion':current_length})
+writer.writerow({'training episodes':args.num_episode, 'reward':total_reward, 'steps to completion':current_length, 'completed': is_terminal})
 
 if args.gif:
     print("Saving gif... ", end="")
