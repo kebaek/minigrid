@@ -15,6 +15,8 @@ def parse_arguments():
     # add arguments
     parser.add_argument('--env', type=str, default='../env/maze_2.txt',
                         help='name of the environment')
+    parser.add_argument('--dir', type=str, default='../env/maze_2.txt',
+                        help='name of the directory')
     parser.add_argument('--num_episode', type=int, default=2000,
                         help='the number of train episodes')
     parser.add_argument('--max_episode_length', type=int, default=200,
