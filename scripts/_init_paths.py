@@ -10,3 +10,6 @@ this_dir = osp.dirname(__file__)
 # Add qlearn to PYTHONPATH
 qlearn_path = osp.join(this_dir, '..')
 add_path(qlearn_path)
+
+qlearn_path = osp.join(this_dir, '..', 'gym-minigrid')
+add_path(qlearn_path)
