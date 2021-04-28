@@ -299,7 +299,7 @@ class FourDoorsEnv(MiniGridEnv):
         self.grid.set(1,2, Key('purple'))
         self.grid.set(4,2, Key('light green'))
         self.grid.set(3,4, Key('blue'))
-        self.grid.set(2,6, Key('pink'))
+        self.grid.set(4,6, Key('pink'))
 
         #Place keys
         self.grid.set(1,3, Door('orange',is_locked=True))
