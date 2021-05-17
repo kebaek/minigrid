@@ -1,4 +1,4 @@
-import _init_paths
+import scripts._init_paths
 import argparse
 import random
 import time
@@ -16,8 +16,8 @@ def parse_arguments():
     # add arguments
     parser.add_argument('--env', type=str, default='../env/maze_2.txt',
                         help='name of the environment')
-    parser.add_argument('--dir', type=str, default='../env/maze_2.txt',
-                        help='name of the directory')
+    parser.add_argument("--dir", type=str, default="",
+                        help="name of the directory to episodes")
     parser.add_argument('--num_episode', type=int, default=2000,
                         help='the number of train episodes')
     parser.add_argument('--max_episode_length', type=int, default=200,
@@ -115,7 +115,7 @@ def main():
     maze_env = utils.FlatObsWrapper(utils.make_env(args.env, args.seed + 10000))
     print('Environment Loaded\n')
 
-    model_dir = utils.get_model_dir(args.env + '/aQL/lr%.2f_discount%.2f_eps%.2f/%d'%(args.lr, args.discount, args.eps, args.num_episode))
+    model_dir = utils.get_model_dir(args.env + '/' + args.dir + '/aQL/lr%.2f_discount%.2f_eps%.2f/epi%dseed%d'%(args.lr, args.discount, args.eps, args.num_episode, args.seed))
     os.makedirs(model_dir, exist_ok=True)
     print(model_dir)
     # train agent

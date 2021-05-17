@@ -338,7 +338,7 @@ class FourDoorsEnv(MiniGridEnv):
                 self.agent_pos = fwd_pos
             if fwd_cell != None and fwd_cell.type == 'goal':
                 done = True
-                reward = 10
+                reward = 1000
         elif action == self.actions.right:
             self.agent_dir = (self.agent_dir + 1) % 4
 

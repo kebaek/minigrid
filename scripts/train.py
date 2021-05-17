@@ -7,7 +7,8 @@ import tensorboardX
 import sys
 
 import utils
-from model import ACModel
+from model import ACModel, QModel
+from module import QLearn
 
 
 # Parse arguments
@@ -27,8 +28,8 @@ parser.add_argument("--log-interval", type=int, default=1,
                     help="number of updates between two logs (default: 1)")
 parser.add_argument("--save-interval", type=int, default=10,
                     help="number of updates between two saves (default: 10, 0 means no saving)")
-parser.add_argument("--procs", type=int, default=16,
-                    help="number of processes (default: 16)")
+# parser.add_argument("--procs", type=int, default=16,
+#                     help="number of processes (default: 16)")
 parser.add_argument("--frames", type=int, default=10**7,
                     help="number of frames of training (default: 1e7)")
 
@@ -61,6 +62,10 @@ parser.add_argument("--recurrence", type=int, default=1,
                     help="number of time-steps gradient is backpropagated (default: 1). If > 1, a LSTM is added to the model to have memory.")
 parser.add_argument("--text", action="store_true", default=False,
                     help="add a GRU to the model to handle text input")
+parser.add_argument("--max-memory", type=int, default=100000,
+                    help="Maximum experiences stored (default: 100000)")
+parser.add_argument("--update-interval", type=int, default=100,
+                    help="update frequece of target network (default: 1000)")
 
 args = parser.parse_args()
 
@@ -95,10 +100,12 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 txt_logger.info(f"Device: {device}\n")
 
 # Load environments
+#
+# envs = []
+# for i in range(args.procs):
+#     envs.append(utils.make_env(args.env, args.seed + 10000 * i))
 
-envs = []
-for i in range(args.procs):
-    envs.append(utils.make_env(args.env, args.seed + 10000 * i))
+env = utils.make_env(args.env, args.seed + 10000)
 txt_logger.info("Environments loaded\n")
 
 # Load training status
@@ -111,30 +118,38 @@ txt_logger.info("Training status loaded\n")
 
 # Load observations preprocessor
 
-obs_space, preprocess_obss = utils.get_obss_preprocessor(envs[0].observation_space)
+obs_space, preprocess_obss = utils.get_obss_preprocessor(env.observation_space)
 if "vocab" in status:
     preprocess_obss.vocab.load_vocab(status["vocab"])
 txt_logger.info("Observations preprocessor loaded")
 
 # Load model
 
-acmodel = ACModel(obs_space, envs[0].action_space, args.mem, args.text)
+if args.algo == 'ddqn':
+    policy_network = QModel(obs_space, env.action_space).to(device)
+    target_network = QModel(obs_space, env.action_space).to(device)
+    model = policy_network
+else:
+    model = ACModel(obs_space, env.action_space, args.mem, args.text).to(device)
 if "model_state" in status:
-    acmodel.load_state_dict(status["model_state"])
-acmodel.to(device)
+    model.load_state_dict(status["model_state"])
 txt_logger.info("Model loaded\n")
-txt_logger.info("{}\n".format(acmodel))
+txt_logger.info("{}\n".format(model))
 
 # Load algo
 
 if args.algo == "a2c":
-    algo = torch_ac.A2CAlgo(envs, acmodel, device, args.frames_per_proc, args.discount, args.lr, args.gae_lambda,
+    algo = torch_ac.A2CAlgo([env], model, device, args.frames_per_proc, args.discount, args.lr, args.gae_lambda,
                             args.entropy_coef, args.value_loss_coef, args.max_grad_norm, args.recurrence,
                             args.optim_alpha, args.optim_eps, preprocess_obss)
 elif args.algo == "ppo":
-    algo = torch_ac.PPOAlgo(envs, acmodel, device, args.frames_per_proc, args.discount, args.lr, args.gae_lambda,
+    algo = torch_ac.PPOAlgo([env], model, device, args.frames_per_proc, args.discount, args.lr, args.gae_lambda,
                             args.entropy_coef, args.value_loss_coef, args.max_grad_norm, args.recurrence,
                             args.optim_eps, args.clip_eps, args.epochs, args.batch_size, preprocess_obss)
+elif args.algo == 'ddqn':
+    algo = QLearn(env, policy_network, target_network, device, args.max_memory,
+              args.discount, args.lr, args.update_interval, args.batch_size,
+              preprocess_obss)
 else:
     raise ValueError("Incorrect algorithm name: {}".format(args.algo))
 
@@ -197,7 +212,7 @@ while num_frames < args.frames:
 
     if args.save_interval > 0 and update % args.save_interval == 0:
         status = {"num_frames": num_frames, "update": update,
-                  "model_state": acmodel.state_dict(), "optimizer_state": algo.optimizer.state_dict()}
+                  "model_state": model.state_dict(), "optimizer_state": algo.optimizer.state_dict()}
         if hasattr(preprocess_obss, "vocab"):
             status["vocab"] = preprocess_obss.vocab.vocab
         utils.save_status(status, model_dir)

@@ -1,4 +1,4 @@
-import _init_paths
+import scripts._init_paths
 import argparse
 import time
 import torch
@@ -49,7 +49,7 @@ print("Environments loaded\n")
 # Load agent
 
 model_dir = args.dir
-policy = pd.read_csv(model_dir + '/%d/policy.csv'%(args.num_episode), index_col=0,squeeze=True)
+policy = pd.read_csv(model_dir + '/epi%dseed%d/policy.csv'%(args.num_episode, args.seed), index_col=0,squeeze=True)
 policy = defaultdict(lambda: -1, policy.to_dict())
 
 if args.gif:
