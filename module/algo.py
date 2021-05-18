@@ -118,6 +118,9 @@ class QLearn:
     def train(self):
         # load sample of memory
         if len(self.memory) < self.batch_size:
+            print('not enough memory')
+            print(len(self.memory))
+            print(self.batch_size)
             return {}
         batch = self.memory.sample(self.batch_size)
 

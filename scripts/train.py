@@ -5,6 +5,7 @@ import torch
 import torch_ac
 import tensorboardX
 import sys
+import numpy as np
 
 import utils
 from model import ACModel, QModel
@@ -36,7 +37,7 @@ parser.add_argument("--frames", type=int, default=10**7,
 ## Parameters for main algorithm
 parser.add_argument("--epochs", type=int, default=4,
                     help="number of epochs for PPO (default: 4)")
-parser.add_argument("--batch-size", type=int, default=256,
+parser.add_argument("--batch-size", type=int, default=128,
                     help="batch size for PPO (default: 256)")
 parser.add_argument("--frames-per-proc", type=int, default=None,
                     help="number of frames per process before update (default: 5 for A2C and 128 for PPO)")
@@ -167,9 +168,12 @@ while num_frames < args.frames:
     # Update model parameters
 
     update_start_time = time.time()
-    exps, logs1 = algo.collect_experiences()
-    logs2 = algo.update_parameters(exps)
-    logs = {**logs1, **logs2}
+    if args.algo == "ddqn":
+        logs = algo.collect_experiences()
+    else:
+        exps, logs1 = algo.collect_experiences()
+        logs2 = algo.update_parameters(exps)
+        logs = {**logs1, **logs2}
     update_end_time = time.time()
 
     num_frames += logs["num_frames"]
@@ -180,25 +184,41 @@ while num_frames < args.frames:
     if update % args.log_interval == 0:
         fps = logs["num_frames"]/(update_end_time - update_start_time)
         duration = int(time.time() - start_time)
-        return_per_episode = utils.synthesize(logs["return_per_episode"])
-        rreturn_per_episode = utils.synthesize(logs["reshaped_return_per_episode"])
-        num_frames_per_episode = utils.synthesize(logs["num_frames_per_episode"])
 
-        header = ["update", "frames", "FPS", "duration"]
-        data = [update, num_frames, fps, duration]
-        header += ["rreturn_" + key for key in rreturn_per_episode.keys()]
-        data += rreturn_per_episode.values()
-        header += ["num_frames_" + key for key in num_frames_per_episode.keys()]
-        data += num_frames_per_episode.values()
-        header += ["entropy", "value", "policy_loss", "value_loss", "grad_norm"]
-        data += [logs["entropy"], logs["value"], logs["policy_loss"], logs["value_loss"], logs["grad_norm"]]
+        if args.algo == 'ddqn':
+            return_per_episode = utils.synthesize(logs["rewards"])
 
-        txt_logger.info(
-            "U {} | F {:06} | FPS {:04.0f} | D {} | rR:μσmM {:.2f} {:.2f} {:.2f} {:.2f} | F:μσmM {:.1f} {:.1f} {} {} | H {:.3f} | V {:.3f} | pL {:.3f} | vL {:.3f} | ∇ {:.3f}"
-            .format(*data))
+            header = ["update", "frames", "FPS", "duration"]
+            data = [update, num_frames, fps, duration]
+            header += ["return_" + key for key in return_per_episode.keys()]
+            data += return_per_episode.values()
+            header += ["policy_loss"]
+            data += [np.mean(logs["loss"])]
 
-        header += ["return_" + key for key in return_per_episode.keys()]
-        data += return_per_episode.values()
+            txt_logger.info(
+            "U {} | F {:06} | FPS {:04.0f} | D {} | rR:μσmM {:.2f} {:.2f} {:.2f} {:.2f} | pL {:.3f}"
+            .format(*data)
+            )
+        else:
+            return_per_episode = utils.synthesize(logs["return_per_episode"])
+            rreturn_per_episode = utils.synthesize(logs["reshaped_return_per_episode"])
+            num_frames_per_episode = utils.synthesize(logs["num_frames_per_episode"])
+
+            header = ["update", "frames", "FPS", "duration"]
+            data = [update, num_frames, fps, duration]
+            header += ["rreturn_" + key for key in rreturn_per_episode.keys()]
+            data += rreturn_per_episode.values()
+            header += ["num_frames_" + key for key in num_frames_per_episode.keys()]
+            data += num_frames_per_episode.values()
+            header += ["entropy", "value", "policy_loss", "value_loss", "grad_norm"]
+            data += [logs["entropy"], logs["value"], logs["policy_loss"], logs["value_loss"], logs["grad_norm"]]
+
+            txt_logger.info(
+                "U {} | F {:06} | FPS {:04.0f} | D {} | rR:μσmM {:.2f} {:.2f} {:.2f} {:.2f} | F:μσmM {:.1f} {:.1f} {} {} | H {:.3f} | V {:.3f} | pL {:.3f} | vL {:.3f} | ∇ {:.3f}"
+                .format(*data))
+
+            header += ["return_" + key for key in return_per_episode.keys()]
+            data += return_per_episode.values()
 
         if status["num_frames"] == 0:
             csv_logger.writerow(header)
@@ -211,8 +231,13 @@ while num_frames < args.frames:
     # Save status
 
     if args.save_interval > 0 and update % args.save_interval == 0:
-        status = {"num_frames": num_frames, "update": update,
-                  "model_state": model.state_dict(), "optimizer_state": algo.optimizer.state_dict()}
+        if args.algo == 'ddqn':
+            status = {"num_frames": num_frames, "update": update,
+                  "model_state": policy_network.state_dict(),
+                  "optimizer_state": algo.optimizer.state_dict()}
+        else:
+            status = {"num_frames": num_frames, "update": update,
+                      "model_state": model.state_dict(), "optimizer_state": algo.optimizer.state_dict()}
         if hasattr(preprocess_obss, "vocab"):
             status["vocab"] = preprocess_obss.vocab.vocab
         utils.save_status(status, model_dir)
