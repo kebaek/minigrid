@@ -169,6 +169,7 @@ while num_frames < args.frames:
 
     update_start_time = time.time()
     if args.algo == "ddqn":
+        print('hello')
         logs = algo.collect_experiences()
     else:
         exps, logs1 = algo.collect_experiences()
@@ -180,8 +181,9 @@ while num_frames < args.frames:
     update += 1
 
     # Print logs
-
+    print('HERE')
     if update % args.log_interval == 0:
+        print('here')
         fps = logs["num_frames"]/(update_end_time - update_start_time)
         duration = int(time.time() - start_time)
 

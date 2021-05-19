@@ -94,5 +94,5 @@ writer.writerow({'training episodes':args.num_episode, 'seed': args.seed, 'rewar
 
 if args.gif:
     print("Saving gif... ", end="")
-    write_gif(np.array(frames), args.gif+".gif", fps=1/args.pause)
+    write_gif(np.array(frames), args.dir + '/' + args.gif+".gif", fps=1/args.pause)
     print("Done.")

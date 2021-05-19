@@ -78,6 +78,7 @@ log_episode_num_frames = torch.zeros(args.procs, device=device)
 while log_done_counter < args.episodes:
     actions = agent.get_actions(obss)
     obss, rewards, dones, info = env.step(actions)
+
     agent.analyze_feedbacks(rewards, dones)
 
     log_episode_return += torch.tensor(rewards, device=device, dtype=torch.float)
@@ -88,7 +89,7 @@ while log_done_counter < args.episodes:
             log_done_counter += 1
             logs["return_per_episode"].append(log_episode_return[i].item())
             logs["num_frames_per_episode"].append(log_episode_num_frames[i].item())
-        if info[i] == ['success']:
+        if info[i]['success'] == True:
             log_success += 1
 
     mask = 1 - torch.tensor(dones, device=device, dtype=torch.float)

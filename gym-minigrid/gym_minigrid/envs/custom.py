@@ -62,7 +62,7 @@ class MazeEnv(MiniGridEnv):
 
     def step(self, action):
         self.step_count += 1
-
+        info = {'success':False}
         reward = 0
         done = False
 
@@ -88,16 +88,19 @@ class MazeEnv(MiniGridEnv):
                 self.agent_pos = fwd_pos
             if fwd_cell != None and fwd_cell.type == 'goal':
                 done = True
+                info['success']=True
                 reward = 10
             if fwd_cell != None and fwd_cell.type == 'ball':
                 reward = 1
                 self.grid.set(*fwd_pos, None)
+        elif self.step_count >= self.max_steps:
+            done = True
         else:
             assert False, "unknown action"
 
         obs = self.gen_obs()
 
-        return obs, reward, done, {}
+        return obs, reward, done, info
 class MazeEnv0(MazeEnv):
     def __init__(self, **kwargs):
         super().__init__(size=7, **kwargs)
@@ -186,6 +189,7 @@ class ThreeDoorsEnv(MiniGridEnv):
 
         reward = 0
         done = False
+        info = {'success':False}
 
         # Get the position in front of the agent
         fwd_pos = self.front_pos
@@ -208,6 +212,7 @@ class ThreeDoorsEnv(MiniGridEnv):
             if fwd_cell == None or fwd_cell.can_overlap():
                 self.agent_pos = fwd_pos
             if fwd_cell != None and fwd_cell.type == 'goal':
+                info['success']=True
                 done = True
                 reward = 10
         elif action == self.actions.right:
@@ -226,12 +231,14 @@ class ThreeDoorsEnv(MiniGridEnv):
                 opened = fwd_cell.toggle(self, fwd_pos)
                 if opened:
                     reward = 2
+        elif self.step_count >= self.max_steps:
+            done = True
         else:
             assert False, "unknown action"
 
         #obs = self.gen_obs()
 
-        return None, reward, done, {}
+        return None, reward, done, info
 class DoorEnv0(ThreeDoorsEnv):
     def __init__(self, **kwargs):
         super().__init__(size=9, **kwargs)
@@ -315,6 +322,7 @@ class FourDoorsEnv(MiniGridEnv):
 
         reward = 0
         done = False
+        info = {'success':False}
 
         # Get the position in front of the agent
         fwd_pos = self.front_pos
@@ -337,6 +345,7 @@ class FourDoorsEnv(MiniGridEnv):
             if fwd_cell == None or fwd_cell.can_overlap():
                 self.agent_pos = fwd_pos
             if fwd_cell != None and fwd_cell.type == 'goal':
+                info['success']=True
                 done = True
                 reward = 1000
         elif action == self.actions.right:
@@ -355,12 +364,14 @@ class FourDoorsEnv(MiniGridEnv):
                 open = fwd_cell.toggle(self, fwd_pos)
                 if open:
                     reward = 2
+        elif self.step_count >= self.max_steps:
+            done = True
         else:
             assert False, "unknown action"
 
         #obs = self.gen_obs()
 
-        return None, reward, done, {}
+        return None, reward, done, info
 class DoorEnv1(FourDoorsEnv):
     def __init__(self, **kwargs):
         super().__init__(size=9, **kwargs)
