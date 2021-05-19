@@ -17,11 +17,13 @@ class MazeEnv(MiniGridEnv):
         size=7,
         agent_start_pos=(1,5),
         agent_start_dir=0,
-        intermediate=False
+        intermediate=False,
+        one_intermediate=False
     ):
         self.agent_start_pos = agent_start_pos
         self.agent_start_dir = agent_start_dir
         self.intermediate = intermediate
+        self.one_intermediate = one_intermediate
         super().__init__(
             grid_size=size,
             max_steps=4*size*size,
@@ -58,6 +60,9 @@ class MazeEnv(MiniGridEnv):
             self.grid.set(5,3, Ball())
             self.grid.set(3,5, Ball())
 
+        if self.one_intermediate:
+            self.grid.set(3,5, Ball())
+
         self.mission = "get to the green goal square"
 
     def step(self, action):
@@ -71,9 +76,10 @@ class MazeEnv(MiniGridEnv):
 
         # Get the contents of the cell in front of the agent
         fwd_cell = self.grid.get(*fwd_pos)
-
+        if self.step_count >= self.max_steps:
+            done = True
         # Rotate left
-        if action == self.actions.left:
+        elif action == self.actions.left:
             self.agent_dir -= 1
             if self.agent_dir < 0:
                 self.agent_dir += 4
@@ -93,8 +99,6 @@ class MazeEnv(MiniGridEnv):
             if fwd_cell != None and fwd_cell.type == 'ball':
                 reward = 1
                 self.grid.set(*fwd_pos, None)
-        elif self.step_count >= self.max_steps:
-            done = True
         else:
             assert False, "unknown action"
 
@@ -107,6 +111,9 @@ class MazeEnv0(MazeEnv):
 class IntermediateMazeEnv0(MazeEnv):
     def __init__(self, **kwargs):
         super().__init__(size=7, intermediate=True)
+class OneIntermediateMazeEnv0(MazeEnv):
+    def __init__(self, **kwargs):
+        super().__init__(size=7, one_intermediate=True)
 register(
     id='MiniGrid-Maze-v0',
     entry_point='gym_minigrid.envs:MazeEnv0'
@@ -114,6 +121,10 @@ register(
 register(
     id='MiniGrid-Maze-Intermediate-v0',
     entry_point='gym_minigrid.envs:IntermediateMazeEnv0'
+)
+register(
+    id='MiniGrid-Maze-OneIntermediate-v0',
+    entry_point='gym_minigrid.envs:OneIntermediateMazeEnv0'
 )
 
 # Sparse vs Well Designed IR
@@ -198,7 +209,9 @@ class ThreeDoorsEnv(MiniGridEnv):
         fwd_cell = self.grid.get(*fwd_pos)
 
         # Rotate left
-        if action == self.actions.left:
+        if self.step_count >= self.max_steps:
+            done = True
+        elif action == self.actions.left:
             self.agent_dir -= 1
             if self.agent_dir < 0:
                 self.agent_dir += 4
@@ -231,8 +244,6 @@ class ThreeDoorsEnv(MiniGridEnv):
                 opened = fwd_cell.toggle(self, fwd_pos)
                 if opened:
                     reward = 2
-        elif self.step_count >= self.max_steps:
-            done = True
         else:
             assert False, "unknown action"
 
@@ -331,7 +342,9 @@ class FourDoorsEnv(MiniGridEnv):
         fwd_cell = self.grid.get(*fwd_pos)
 
         # Rotate left
-        if action == self.actions.left:
+        if self.step_count >= self.max_steps:
+            done = True
+        elif action == self.actions.left:
             self.agent_dir -= 1
             if self.agent_dir < 0:
                 self.agent_dir += 4
