@@ -2,9 +2,9 @@ import argparse
 import time
 import torch
 from torch_ac.utils.penv import ParallelEnv
-
+import numpy as np
 import utils
-
+from gym_minigrid.wrappers import FullyObsWrapper
 
 # Parse arguments
 
@@ -44,7 +44,7 @@ print(f"Device: {device}\n")
 
 envs = []
 for i in range(args.procs):
-    env = utils.make_env(args.env, args.seed + 10000 * i)
+    env = FullyObsWrapper(utils.make_env(args.env, args.seed + 10000 * i))
     envs.append(env)
 env = ParallelEnv(envs)
 print("Environments loaded\n")
@@ -74,7 +74,7 @@ obss = env.reset()
 log_done_counter, log_success = 0,0
 log_episode_return = torch.zeros(args.procs, device=device)
 log_episode_num_frames = torch.zeros(args.procs, device=device)
-
+total_rewards = 0
 while log_done_counter < args.episodes:
     actions = agent.get_actions(obss)
     obss, rewards, dones, info = env.step(actions)
@@ -89,15 +89,19 @@ while log_done_counter < args.episodes:
             log_done_counter += 1
             logs["return_per_episode"].append(log_episode_return[i].item())
             logs["num_frames_per_episode"].append(log_episode_num_frames[i].item())
+            total_rewards += log_episode_return[i]
         if info[i]['success'] == True:
             log_success += 1
-
     mask = 1 - torch.tensor(dones, device=device, dtype=torch.float)
     log_episode_return *= mask
     log_episode_num_frames *= mask
 
 end_time = time.time()
+print("Average Rewards")
+print(np.mean(logs['return_per_episode']))
 
+print('Average Steps')
+print(np.mean(logs["num_frames_per_episode"]))
 # Print logs
 
 num_frames = sum(logs["num_frames_per_episode"])
@@ -121,4 +125,4 @@ if n > 0:
     for i in indexes[:n]:
         print("- episode {}: R={}, F={}".format(i, logs["return_per_episode"][i], logs["num_frames_per_episode"][i]))
 
-print("\nsuccess rate: {}".format(log_success/log_done_counter))
+print("\nsuccess rate: {}/{}".format(log_success,log_done_counter))

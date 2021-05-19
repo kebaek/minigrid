@@ -48,8 +48,8 @@ print("Environments loaded\n")
 
 # Load agent
 
-model_dir = args.dir
-policy = pd.read_csv(model_dir + '/epi%dseed%d/policy.csv'%(args.num_episode, args.seed), index_col=0,squeeze=True)
+model_dir = args.dir + '/epi%dseed%d/'%(args.num_episode, args.seed)
+policy = pd.read_csv(model_dir + 'policy.csv', index_col=0,squeeze=True)
 policy = defaultdict(lambda: -1, policy.to_dict())
 
 if args.gif:
@@ -94,5 +94,5 @@ writer.writerow({'training episodes':args.num_episode, 'seed': args.seed, 'rewar
 
 if args.gif:
     print("Saving gif... ", end="")
-    write_gif(np.array(frames), args.dir + '/' + args.gif+".gif", fps=1/args.pause)
+    write_gif(np.array(frames), model_dir+ '/' + args.gif+".gif", fps=1/args.pause)
     print("Done.")

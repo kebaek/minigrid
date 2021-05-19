@@ -10,6 +10,7 @@ import numpy as np
 import utils
 from model import ACModel, QModel
 from module import QLearn
+from gym_minigrid.wrappers import FullyObsWrapper
 
 
 # Parse arguments
@@ -106,7 +107,7 @@ txt_logger.info(f"Device: {device}\n")
 # for i in range(args.procs):
 #     envs.append(utils.make_env(args.env, args.seed + 10000 * i))
 
-env = utils.make_env(args.env, args.seed + 10000)
+env = FullyObsWrapper(utils.make_env(args.env, args.seed + 10000))
 txt_logger.info("Environments loaded\n")
 
 # Load training status
@@ -181,9 +182,7 @@ while num_frames < args.frames:
     update += 1
 
     # Print logs
-    print('HERE')
     if update % args.log_interval == 0:
-        print('here')
         fps = logs["num_frames"]/(update_end_time - update_start_time)
         duration = int(time.time() - start_time)
 
