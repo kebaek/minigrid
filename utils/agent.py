@@ -4,7 +4,7 @@ import utils
 from model import ACModel, QModel
 
 
-class DDQNAgent:
+class DQNAgent:
     def __init__(self, obs_space, action_space, model_dir,
                  device=None, argmax=False, num_envs=1):
         obs_space, self.preprocess_obss = utils.get_obss_preprocessor(
@@ -14,7 +14,6 @@ class DDQNAgent:
         self.device = device
         self.argmax = argmax
         self.num_envs = num_envs
-
         self.model.load_state_dict(utils.get_model_state(model_dir))
         self.model.to(self.device)
         self.model.eval()

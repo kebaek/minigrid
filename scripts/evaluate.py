@@ -52,8 +52,8 @@ print("Environments loaded\n")
 # Load agent
 
 model_dir = utils.get_model_dir(args.model)
-if args.algo == 'ddqn':
-    agent = utils.DDQNAgent(env.observation_space, env.action_space, model_dir,
+if args.algo == 'dqn':
+    agent = utils.DQNAgent(env.observation_space, env.action_space, model_dir,
                         device=device, argmax=args.argmax, num_envs=args.procs)
 else:
     agent = utils.ACAgent(env.observation_space, env.action_space, model_dir,

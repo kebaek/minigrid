@@ -9,7 +9,6 @@ import numpy as np
 
 import utils
 from model import ACModel, QModel
-from module import QLearn
 from gym_minigrid.wrappers import FullyObsWrapper
 
 
@@ -30,8 +29,8 @@ parser.add_argument("--log-interval", type=int, default=1,
                     help="number of updates between two logs (default: 1)")
 parser.add_argument("--save-interval", type=int, default=10,
                     help="number of updates between two saves (default: 10, 0 means no saving)")
-# parser.add_argument("--procs", type=int, default=16,
-#                     help="number of processes (default: 16)")
+parser.add_argument("--procs", type=int, default=16,
+                     help="number of processes (default: 16)")
 parser.add_argument("--frames", type=int, default=10**7,
                     help="number of frames of training (default: 1e7)")
 
@@ -106,8 +105,10 @@ txt_logger.info(f"Device: {device}\n")
 # envs = []
 # for i in range(args.procs):
 #     envs.append(utils.make_env(args.env, args.seed + 10000 * i))
-
-env = FullyObsWrapper(utils.make_env(args.env, args.seed + 10000))
+envs = []
+for i in range(args.procs):
+    env = FullyObsWrapper(utils.make_env(args.env, args.seed + 10000 * i))
+    envs.append(env)
 txt_logger.info("Environments loaded\n")
 
 # Load training status
@@ -120,19 +121,19 @@ txt_logger.info("Training status loaded\n")
 
 # Load observations preprocessor
 
-obs_space, preprocess_obss = utils.get_obss_preprocessor(env.observation_space)
+obs_space, preprocess_obss = utils.get_obss_preprocessor(envs[0].observation_space)
 if "vocab" in status:
     preprocess_obss.vocab.load_vocab(status["vocab"])
 txt_logger.info("Observations preprocessor loaded")
 
 # Load model
 
-if args.algo == 'ddqn':
-    policy_network = QModel(obs_space, env.action_space).to(device)
-    target_network = QModel(obs_space, env.action_space).to(device)
+if args.algo == 'dqn':
+    policy_network = QModel(obs_space, envs[0].action_space).to(device)
+    target_network = QModel(obs_space, envs[0].action_space).to(device)
     model = policy_network
 else:
-    model = ACModel(obs_space, env.action_space, args.mem, args.text).to(device)
+    model = ACModel(obs_space, envs[0].action_space, args.mem, args.text).to(device)
 if "model_state" in status:
     model.load_state_dict(status["model_state"])
 txt_logger.info("Model loaded\n")
@@ -141,15 +142,15 @@ txt_logger.info("{}\n".format(model))
 # Load algo
 
 if args.algo == "a2c":
-    algo = torch_ac.A2CAlgo([env], model, device, args.frames_per_proc, args.discount, args.lr, args.gae_lambda,
+    algo = torch_ac.A2CAlgo(envs, model, device, args.frames_per_proc, args.discount, args.lr, args.gae_lambda,
                             args.entropy_coef, args.value_loss_coef, args.max_grad_norm, args.recurrence,
                             args.optim_alpha, args.optim_eps, preprocess_obss)
 elif args.algo == "ppo":
-    algo = torch_ac.PPOAlgo([env], model, device, args.frames_per_proc, args.discount, args.lr, args.gae_lambda,
+    algo = torch_ac.PPOAlgo(envs, model, device, args.frames_per_proc, args.discount, args.lr, args.gae_lambda,
                             args.entropy_coef, args.value_loss_coef, args.max_grad_norm, args.recurrence,
                             args.optim_eps, args.clip_eps, args.epochs, args.batch_size, preprocess_obss)
-elif args.algo == 'ddqn':
-    algo = QLearn(env, policy_network, target_network, device, args.max_memory,
+elif args.algo == 'dqn':
+    algo = torch_ac.DQNAlgo(envs[0], policy_network, target_network, device, args.max_memory,
               args.discount, args.lr, args.update_interval, args.batch_size,
               preprocess_obss)
 else:
@@ -169,8 +170,7 @@ while num_frames < args.frames:
     # Update model parameters
 
     update_start_time = time.time()
-    if args.algo == "ddqn":
-        print('hello')
+    if args.algo == "dqn":
         logs = algo.collect_experiences()
     else:
         exps, logs1 = algo.collect_experiences()
@@ -186,7 +186,7 @@ while num_frames < args.frames:
         fps = logs["num_frames"]/(update_end_time - update_start_time)
         duration = int(time.time() - start_time)
 
-        if args.algo == 'ddqn':
+        if args.algo == 'dqn':
             return_per_episode = utils.synthesize(logs["rewards"])
 
             header = ["update", "frames", "FPS", "duration"]
@@ -232,7 +232,7 @@ while num_frames < args.frames:
     # Save status
 
     if args.save_interval > 0 and update % args.save_interval == 0:
-        if args.algo == 'ddqn':
+        if args.algo == 'dqn':
             status = {"num_frames": num_frames, "update": update,
                   "model_state": policy_network.state_dict(),
                   "optimizer_state": algo.optimizer.state_dict()}

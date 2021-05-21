@@ -1193,10 +1193,10 @@ class MiniGridEnv(gym.Env):
         # We do this by placing the carried object at the agent's position
         # in the agent's partially observable view
         agent_pos = grid.width // 2, grid.height - 1
-        if self.carrying:
-            grid.set(*agent_pos, self.carrying)
-        else:
-            grid.set(*agent_pos, None)
+        # if self.carrying:
+        #     grid.set(*agent_pos, self.carrying)
+        # else:
+        #     grid.set(*agent_pos, None)
 
         return grid, vis_mask
 

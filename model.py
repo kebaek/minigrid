@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions.categorical import Categorical
 import torch_ac
+import matplotlib.pyplot as plt
 
 
 # Function from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr/blob/master/model.py
@@ -15,55 +16,31 @@ def init_params(m):
             m.bias.data.fill_(0)
 
 class QModel(nn.Module):
+
     def __init__(self, obs_space, action_space):
-        super().__init__()
-        # Define image embedding
-        n = obs_space["image"][0]
-        m = obs_space["image"][1]
-        z = obs_space["image"][2]
-        shape = n*m*z
-        self.image_conv = nn.Sequential(
-            nn.Linear(shape, shape//2),
-            nn.ReLU(),
-            nn.Linear(shape//2, shape//4),
-            nn.ReLU(),
-            nn.Linear(shape//4, 64),
-            nn.ReLU()
-        )
-        self.embedding_size = 64
+        super(QModel, self).__init__()
+        h, w, _ = obs_space['image']
+        self.conv1 = nn.Conv2d(3, 16, kernel_size=2, stride=1)
+        self.bn1 = nn.BatchNorm2d(16)
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=2, stride=1)
+        self.bn2 = nn.BatchNorm2d(32)
+        self.conv3 = nn.Conv2d(32, 32, kernel_size=2, stride=1)
+        self.bn3 = nn.BatchNorm2d(32)
 
-        self.word_embedding_size = 32
-        self.word_embedding = nn.Embedding(obs_space["text"],
-                                           self.word_embedding_size)
-        self.text_embedding_size = 128
-        self.text_rnn = nn.GRU(self.word_embedding_size,
-                               self.text_embedding_size, batch_first=True)
-
-        self.embedding_size += self.text_embedding_size
-        # Define  model
-        self.actor = nn.Sequential(
-            nn.Linear(self.embedding_size, 64),
-            nn.Tanh(),
-            nn.Linear(64, action_space.n)
-        )
-
-        # Initialize parameters correctly
-        self.apply(init_params)
+        def conv2d_size_out(size, kernel_size = 2, stride = 1):
+            return (size - (kernel_size - 1) - 1) // stride  + 1
+        convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(w)))
+        convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(h)))
+        linear_input_size = convw * convh * 32
+        self.head = nn.Linear(linear_input_size, action_space.n)
 
     def forward(self, obs):
-        x = obs.image.transpose(1, 3).transpose(2, 3)
-        x = x.reshape(x.shape[0], -1)
-        x = self.image_conv(x)
+        obs = obs.image.permute(0,3,1,2)
+        obs = F.relu(self.bn1(self.conv1(obs)))
+        obs = F.relu(self.bn2(self.conv2(obs)))
+        obs = F.relu(self.bn3(self.conv3(obs)))
+        return self.head(obs.view(obs.size(0), -1))
 
-        embed_text = self._get_embed_text(obs.text)
-        embedding = torch.cat((x, embed_text), dim=1)
-        x = self.actor(embedding)
-
-        return x
-
-    def _get_embed_text(self, text):
-        _, hidden = self.text_rnn(self.word_embedding(text))
-        return hidden[-1]
 
 class ACModel(nn.Module, torch_ac.RecurrentACModel):
     def __init__(self, obs_space, action_space, use_memory=False, use_text=False):
@@ -130,6 +107,7 @@ class ACModel(nn.Module, torch_ac.RecurrentACModel):
 
     def forward(self, obs, memory):
         x = obs.image.transpose(1, 3).transpose(2, 3)
+
         x = self.image_conv(x)
         x = x.reshape(x.shape[0], -1)
 

@@ -247,9 +247,9 @@ class ThreeDoorsEnv(MiniGridEnv):
         else:
             assert False, "unknown action"
 
-        #obs = self.gen_obs()
+        obs = self.gen_obs()
 
-        return None, reward, done, info
+        return obs, reward, done, info
 class DoorEnv0(ThreeDoorsEnv):
     def __init__(self, **kwargs):
         super().__init__(size=9, **kwargs)
@@ -340,7 +340,6 @@ class FourDoorsEnv(MiniGridEnv):
 
         # Get the contents of the cell in front of the agent
         fwd_cell = self.grid.get(*fwd_pos)
-
         # Rotate left
         if self.step_count >= self.max_steps:
             done = True
@@ -382,9 +381,9 @@ class FourDoorsEnv(MiniGridEnv):
         else:
             assert False, "unknown action"
 
-        #obs = self.gen_obs()
+        obs = self.gen_obs()
 
-        return None, reward, done, info
+        return obs, reward, done, info
 class DoorEnv1(FourDoorsEnv):
     def __init__(self, **kwargs):
         super().__init__(size=9, **kwargs)
