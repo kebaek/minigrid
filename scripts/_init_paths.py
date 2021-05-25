@@ -6,6 +6,7 @@ def add_path(path):
         sys.path.insert(0, path)
 
 this_dir = osp.dirname(__file__)
+print(this_dir)
 
 # Add qlearn to PYTHONPATH
 qlearn_path = osp.join(this_dir, '..')

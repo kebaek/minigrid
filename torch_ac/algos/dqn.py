@@ -43,7 +43,7 @@ class DQNAlgo:
     def __init__(self, env, policy_network, target_network, device, max_memory,
                  discount, lr, update_interval, batch_size, preprocess_obs):
         # parameters
-        self.env = env
+        self.env = env #ParallelEnv(envs)
         self.device = device
         self.discount = discount
         self.batch_size = batch_size
@@ -81,19 +81,20 @@ class DQNAlgo:
             preprocessed_obs = self.preprocess_obs([obs], device=self.device)
             # Predict the action
             sample = random.random()
-            eps_threshold = self.eps_end + (self.epsilon - self.eps_end) * \
-                math.exp(-1. * self.steps_done / self.eps_decay)
+            # eps_threshold = self.eps_end + (self.epsilon - self.eps_end) * \
+            #     math.exp(-1. * self.steps_done / self.eps_decay)
             self.steps_done += 1
             if sample > self.epsilon:
                 with torch.no_grad():
                     Q = self.policy_network(preprocessed_obs)
-                action = torch.argmax(Q).item()
-
+                action = (Q == torch.max(Q)).nonzero()[:,1]
+                i = random.randrange(len(action))
+                action = action[i].item()
             else:
                 action = random.randrange(self.n_actions)
 
             # Apply action, get rewards and new state
-            new_obs, reward, done, _ = self.env.step(action)
+            new_obs, reward, done, info = self.env.step(action)
 
             # Statistics
             log_reward.append(reward)
@@ -112,17 +113,16 @@ class DQNAlgo:
         return {
             "num_frames": log_episodes,
             "rewards": log_reward,
-            "loss": log_loss
+            "loss": log_loss,
+            "won": info['success']
         }
 
     def train(self):
         # load sample of memory
         if len(self.memory) < self.batch_size:
-            print('not enough memory')
-            print(len(self.memory))
-            print(self.batch_size)
-            return {}
-        batch = self.memory.sample(self.batch_size)
+            batch = self.memory.sample(len(self.memory))
+        else:
+            batch = self.memory.sample(self.batch_size)
 
         # Zero the parameter gradients
         self.optimizer.zero_grad()
@@ -155,7 +155,7 @@ class DQNAlgo:
         dones = [exp[4] for exp in batch]
 
         # fill Q Table
-        indices = np.arange(self.batch_size)
+        indices = np.arange(min(self.batch_size, len(self.memory)))
         Q_policy = self.policy_network(obs)[indices, actions]
         max_actions = self.target_network(new_obs).max(dim=1)[0]
 

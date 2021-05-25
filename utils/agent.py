@@ -2,6 +2,8 @@ import torch
 
 import utils
 from model import ACModel, QModel
+import numpy as np
+import random
 
 
 class DQNAgent:
@@ -24,9 +26,12 @@ class DQNAgent:
         preprocessed_obss = self.preprocess_obss(obss, device=self.device)
 
         Q = self.model(preprocessed_obss)
-        actions = torch.argmax(Q, dim=1, keepdim=True)
-
-        return actions.clone().cpu().detach().numpy()
+        actions = np.zeros((len(Q),))
+        for i, q in enumerate(Q):
+            a = (q == torch.max(q)).nonzero()[0]
+            j = random.randrange(len(a))
+            actions[i] = a[j].item()
+        return actions
 
     def get_action(self, obs):
         return self.get_actions([obs])[0]

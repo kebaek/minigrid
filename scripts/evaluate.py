@@ -5,6 +5,8 @@ from torch_ac.utils.penv import ParallelEnv
 import numpy as np
 import utils
 from gym_minigrid.wrappers import FullyObsWrapper
+import csv
+
 
 # Parse arguments
 
@@ -90,18 +92,20 @@ while log_done_counter < args.episodes:
             logs["return_per_episode"].append(log_episode_return[i].item())
             logs["num_frames_per_episode"].append(log_episode_num_frames[i].item())
             total_rewards += log_episode_return[i]
-        if info[i]['success'] == True:
-            log_success += 1
+            if info[i]['success'] == True:
+                log_success += 1
     mask = 1 - torch.tensor(dones, device=device, dtype=torch.float)
     log_episode_return *= mask
     log_episode_num_frames *= mask
 
 end_time = time.time()
 print("Average Rewards")
-print(np.mean(logs['return_per_episode']))
+avg_rewards = np.mean(logs['return_per_episode'])
+print(avg_rewards)
 
 print('Average Steps')
-print(np.mean(logs["num_frames_per_episode"]))
+avg_steps = np.mean(logs["num_frames_per_episode"])
+print(avg_steps)
 # Print logs
 
 num_frames = sum(logs["num_frames_per_episode"])
@@ -126,3 +130,8 @@ if n > 0:
         print("- episode {}: R={}, F={}".format(i, logs["return_per_episode"][i], logs["num_frames_per_episode"][i]))
 
 print("\nsuccess rate: {}/{}".format(log_success,log_done_counter))
+
+file = open(model_dir + '/eval.csv', "a+")
+fieldnames = ['completed', 'reward', 'steps to completion']
+writer = csv.DictWriter(file, fieldnames=fieldnames)
+writer.writerow({'reward':avg_rewards, 'steps to completion':avg_steps, 'completed': log_success})

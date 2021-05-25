@@ -33,6 +33,8 @@ parser.add_argument("--procs", type=int, default=16,
                      help="number of processes (default: 16)")
 parser.add_argument("--frames", type=int, default=10**7,
                     help="number of frames of training (default: 1e7)")
+parser.add_argument("--episodes", type=int, default=5000,
+                    help="number of episodes of training")
 
 ## Parameters for main algorithm
 parser.add_argument("--epochs", type=int, default=4,
@@ -116,7 +118,7 @@ txt_logger.info("Environments loaded\n")
 try:
     status = utils.get_status(model_dir)
 except OSError:
-    status = {"num_frames": 0, "update": 0}
+    status = {"num_frames": 0, "update": 0, 'num_episodes': 0}
 txt_logger.info("Training status loaded\n")
 
 # Load observations preprocessor
@@ -136,6 +138,8 @@ else:
     model = ACModel(obs_space, envs[0].action_space, args.mem, args.text).to(device)
 if "model_state" in status:
     model.load_state_dict(status["model_state"])
+if "target_state" in status:
+    target_network.load_state_dict(status["target_state"])
 txt_logger.info("Model loaded\n")
 txt_logger.info("{}\n".format(model))
 
@@ -163,10 +167,12 @@ txt_logger.info("Optimizer loaded\n")
 # Train model
 
 num_frames = status["num_frames"]
+num_episodes = status["num_episodes"]
+
 update = status["update"]
 start_time = time.time()
 
-while num_frames < args.frames:
+while num_episodes < args.episodes:
     # Update model parameters
 
     update_start_time = time.time()
@@ -179,6 +185,10 @@ while num_frames < args.frames:
     update_end_time = time.time()
 
     num_frames += logs["num_frames"]
+    if args.algo == 'dqn':
+        num_episodes += 1
+    else:
+        num_episodes += logs['done']
     update += 1
 
     # Print logs
@@ -195,9 +205,10 @@ while num_frames < args.frames:
             data += return_per_episode.values()
             header += ["policy_loss"]
             data += [np.mean(logs["loss"])]
+            data += [logs['won']]
 
             txt_logger.info(
-            "U {} | F {:06} | FPS {:04.0f} | D {} | rR:μσmM {:.2f} {:.2f} {:.2f} {:.2f} | pL {:.3f}"
+            "U {} | F {:06} | FPS {:04.0f} | D {} | rR:μσmM {:.2f} {:.2f} {:.2f} {:.2f} | pL {:.3f} | W: {}"
             .format(*data)
             )
         else:
@@ -233,8 +244,8 @@ while num_frames < args.frames:
 
     if args.save_interval > 0 and update % args.save_interval == 0:
         if args.algo == 'dqn':
-            status = {"num_frames": num_frames, "update": update,
-                  "model_state": policy_network.state_dict(),
+            status = {"num_frames": num_frames, "num_episodes": num_episodes, "update": update,
+                  "model_state": policy_network.state_dict(), "target_state": target_network.state_dict(),
                   "optimizer_state": algo.optimizer.state_dict()}
         else:
             status = {"num_frames": num_frames, "update": update,
