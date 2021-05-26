@@ -238,12 +238,12 @@ class ThreeDoorsEnv(MiniGridEnv):
             if fwd_cell and fwd_cell.can_pickup():
                 self.carrying.append(fwd_cell.color)
                 self.grid.set(*fwd_pos, None)
-                reward = 2
+                reward = 0
         elif action == self.actions.toggle:
             if fwd_cell:
                 opened = fwd_cell.toggle(self, fwd_pos)
                 if opened:
-                    reward = 2
+                    reward = 0
         else:
             assert False, "unknown action"
 
@@ -359,7 +359,7 @@ class FourDoorsEnv(MiniGridEnv):
             if fwd_cell != None and fwd_cell.type == 'goal':
                 info['success']=True
                 done = True
-                reward = 10
+                reward = 1000
         elif action == self.actions.right:
             self.agent_dir = (self.agent_dir + 1) % 4
 
