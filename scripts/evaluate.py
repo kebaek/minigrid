@@ -1,3 +1,4 @@
+import init_paths
 import argparse
 import time
 import torch

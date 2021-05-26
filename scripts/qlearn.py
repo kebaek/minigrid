@@ -1,4 +1,4 @@
-import scripts._init_paths
+import _init_paths
 import argparse
 import random
 import time
