@@ -200,8 +200,8 @@ while num_episodes < args.episodes:
         if args.algo == 'dqn':
             return_per_episode = utils.synthesize(logs["rewards"])
 
-            header = ["update", "frames", "FPS", "duration"]
-            data = [update, num_frames, fps, duration]
+            header = ["update", "episodes", "frames", "FPS", "duration"]
+            data = [update, num_episodes, num_frames, fps, duration]
             header += ["return_" + key for key in return_per_episode.keys()]
             data += return_per_episode.values()
             header += ["policy_loss"]
@@ -209,7 +209,7 @@ while num_episodes < args.episodes:
             data += [logs['won']]
 
             txt_logger.info(
-            "U {} | F {:06} | FPS {:04.0f} | D {} | rR:μσmM {:.2f} {:.2f} {:.2f} {:.2f} | pL {:.3f} | W: {}"
+            "U {} | E {} | F {:06} | FPS {:04.0f} | D {} | rR:μσmM {:.2f} {:.2f} {:.2f} {:.2f} | pL {:.3f} | W: {}"
             .format(*data)
             )
         else:
@@ -217,8 +217,8 @@ while num_episodes < args.episodes:
             rreturn_per_episode = utils.synthesize(logs["reshaped_return_per_episode"])
             num_frames_per_episode = utils.synthesize(logs["num_frames_per_episode"])
 
-            header = ["update", "frames", "FPS", "duration"]
-            data = [update, num_frames, fps, duration]
+            header = ["update", "episodes", "frames", "FPS", "duration"]
+            data = [update, num_episodes, num_frames, fps, duration]
             header += ["rreturn_" + key for key in rreturn_per_episode.keys()]
             data += rreturn_per_episode.values()
             header += ["num_frames_" + key for key in num_frames_per_episode.keys()]
@@ -227,7 +227,7 @@ while num_episodes < args.episodes:
             data += [logs["entropy"], logs["value"], logs["policy_loss"], logs["value_loss"], logs["grad_norm"]]
 
             txt_logger.info(
-                "U {} | F {:06} | FPS {:04.0f} | D {} | rR:μσmM {:.2f} {:.2f} {:.2f} {:.2f} | F:μσmM {:.1f} {:.1f} {} {} | H {:.3f} | V {:.3f} | pL {:.3f} | vL {:.3f} | ∇ {:.3f}"
+                "U {} | E {} | F {:06} | FPS {:04.0f} | D {} | rR:μσmM {:.2f} {:.2f} {:.2f} {:.2f} | F:μσmM {:.1f} {:.1f} {} {} | H {:.3f} | V {:.3f} | pL {:.3f} | vL {:.3f} | ∇ {:.3f}"
                 .format(*data))
 
             header += ["return_" + key for key in return_per_episode.keys()]

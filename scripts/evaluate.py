@@ -93,7 +93,7 @@ while log_done_counter < args.episodes:
             logs["return_per_episode"].append(log_episode_return[i].item())
             logs["num_frames_per_episode"].append(log_episode_num_frames[i].item())
             total_rewards += log_episode_return[i]
-            if info[i]['success'] == True:
+            if info[i]['success'] == True and log_succes < 10:
                 log_success += 1
     mask = 1 - torch.tensor(dones, device=device, dtype=torch.float)
     log_episode_return *= mask
@@ -101,11 +101,11 @@ while log_done_counter < args.episodes:
 
 end_time = time.time()
 print("Average Rewards")
-avg_rewards = np.mean(logs['return_per_episode'])
+avg_rewards = np.mean(logs['return_per_episode'][:10])
 print(avg_rewards)
 
 print('Average Steps')
-avg_steps = np.mean(logs["num_frames_per_episode"])
+avg_steps = np.mean(logs["num_frames_per_episode"][:10])
 print(avg_steps)
 # Print logs
 
