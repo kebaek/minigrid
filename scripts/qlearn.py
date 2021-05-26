@@ -55,7 +55,7 @@ def train(maze_env, model_dir, num_episode, max_episode_length, lr,
         is_terminal = 0
         obs = maze_env.reset()
         state = str(maze_env)
-        while not is_terminal and (current_length < max_episode_length):
+        while not is_terminal:
             visited_states.add(state)
             if random.random() <= eps:
                 action = random.randint(0, maze_env.action_space.n - 1)
