@@ -1,4 +1,4 @@
-import init_paths
+import _init_paths
 import argparse
 import time
 import torch
@@ -93,7 +93,7 @@ while log_done_counter < args.episodes:
             logs["return_per_episode"].append(log_episode_return[i].item())
             logs["num_frames_per_episode"].append(log_episode_num_frames[i].item())
             total_rewards += log_episode_return[i]
-            if info[i]['success'] == True and log_succes < 10:
+            if info[i]['success'] == True and log_success < 10:
                 log_success += 1
     mask = 1 - torch.tensor(dones, device=device, dtype=torch.float)
     log_episode_return *= mask

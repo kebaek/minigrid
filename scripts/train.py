@@ -28,7 +28,7 @@ parser.add_argument("--seed", type=int, default=1,
                     help="random seed (default: 1)")
 parser.add_argument("--log-interval", type=int, default=1,
                     help="number of updates between two logs (default: 1)")
-parser.add_argument("--save-interval", type=int, default=10,
+parser.add_argument("--save-interval", type=int, default=1,
                     help="number of updates between two saves (default: 10, 0 means no saving)")
 parser.add_argument("--procs", type=int, default=16,
                      help="number of processes (default: 16)")
@@ -249,7 +249,7 @@ while num_episodes < args.episodes:
                   "model_state": policy_network.state_dict(), "target_state": target_network.state_dict(),
                   "optimizer_state": algo.optimizer.state_dict()}
         else:
-            status = {"num_frames": num_frames, "update": update,
+            status = {"num_frames": num_frames, "num_episodes":num_episodes,"update": update,
                       "model_state": model.state_dict(), "optimizer_state": algo.optimizer.state_dict()}
         if hasattr(preprocess_obss, "vocab"):
             status["vocab"] = preprocess_obss.vocab.vocab

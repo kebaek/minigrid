@@ -43,7 +43,7 @@ print(f"Device: {device}\n")
 
 # Load environments
 
-env = utils.FlatObsWrapper(utils.make_env(args.env, args.seed + 10000))
+env = utils.make_env(args.env, args.seed + 10000)
 print("Environments loaded\n")
 
 # Load agent
@@ -84,13 +84,13 @@ while not is_terminal and (current_length < args.max_episode_length):
     total_reward += reward
     state = next_state
 
-print('reaches winning state:' + str(is_terminal))
+print('reaches winning state:' + str(info['success']))
 print('total steps: %d'%current_length)
 print('total reward: %d'%total_reward)
 file = open(model_dir + '/log.csv', "a+")
 fieldnames = ['training episodes', 'completed', 'reward', 'steps to completion', 'seed']
 writer = csv.DictWriter(file, fieldnames=fieldnames)
-writer.writerow({'training episodes':args.num_episode, 'seed': args.seed, 'reward':total_reward, 'steps to completion':current_length, 'completed': int(is_terminal)})
+writer.writerow({'training episodes':args.num_episode, 'seed': args.seed, 'reward':total_reward, 'steps to completion':current_length, 'completed': int(info['success'])})
 
 if args.gif:
     print("Saving gif... ", end="")

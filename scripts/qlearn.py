@@ -112,7 +112,7 @@ def main():
     # parse arguments
     args = parse_arguments()
     # create env
-    maze_env = utils.FlatObsWrapper(utils.make_env(args.env, args.seed + 10000))
+    maze_env = utils.make_env(args.env, args.seed + 10000)
     print('Environment Loaded\n')
 
     model_dir = utils.get_model_dir(args.env + '/' + args.dir + '/aQL/lr%.2f_discount%.2f_eps%.2f/epi%dseed%d'%(args.lr, args.discount, args.eps, args.num_episode, args.seed))
