@@ -12,7 +12,7 @@ For Deep RL algorithms (A2C, PPO, DQN):
 - **Script to train:** `scripts/train.py`
 - **Script to evaluate**, `scripts/evaluate.py`
 
-See `experiments\` folder to run all experiments conducted in the paper.
+See `experiments/` folder to run all experiments conducted in the paper.
 We provide a sample parser file `Log_Parser.ipynb` to gather results presented in paper (average steps, rewards, win rate) for all seeds.
 
 ## Installation
