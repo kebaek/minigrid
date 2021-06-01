@@ -145,7 +145,7 @@ class ThreeDoorsEnv(MiniGridEnv):
         size=9,
         agent_start_pos=(1,7),
         agent_start_dir=3,
-        intermediate=False
+        intermediate=True
     ):
         self.agent_start_pos = agent_start_pos
         self.agent_start_dir = agent_start_dir
@@ -158,7 +158,7 @@ class ThreeDoorsEnv(MiniGridEnv):
         self.carrying = []
         self.actions = ThreeDoorsEnv.Actions
         self.action_space = spaces.Discrete(len(self.actions))
-
+        self.intermediate = intermediate
 
     def _gen_grid(self, width, height):
         # Create an empty grid
@@ -238,11 +238,12 @@ class ThreeDoorsEnv(MiniGridEnv):
             if fwd_cell and fwd_cell.can_pickup():
                 self.carrying.append(fwd_cell.color)
                 self.grid.set(*fwd_pos, None)
-                reward = 2
+                if self.intermediate:
+                    reward = 2
         elif action == self.actions.toggle:
             if fwd_cell:
                 opened = fwd_cell.toggle(self, fwd_pos)
-                if opened:
+                if opened and self.intermediate:
                     reward = 2
         else:
             assert False, "unknown action"
@@ -253,9 +254,19 @@ class ThreeDoorsEnv(MiniGridEnv):
 class DoorEnv0(ThreeDoorsEnv):
     def __init__(self, **kwargs):
         super().__init__(size=9, **kwargs)
+
+class DoorEnv4(ThreeDoorsEnv):
+    def __init__(self, **kwargs):
+        super().__init__(size=9, intermediate=False, **kwargs)
+
 register(
     id='MiniGrid-ThreeDoor-v0',
     entry_point='gym_minigrid.envs:DoorEnv0'
+)
+
+register(
+    id='MiniGrid-SparseThreeDoor-v0',
+    entry_point = 'gym_minigrid.envs:DoorEnv4'
 )
 # Trade off between Path and Computational Complexity
 class FourDoorsEnv(MiniGridEnv):
@@ -273,9 +284,10 @@ class FourDoorsEnv(MiniGridEnv):
     def __init__(
         self,
         size=9,
+        terminal_reward = 1000,
         agent_start_pos=(1,7),
         agent_start_dir=3,
-        intermediate=False
+        intermediate=True
     ):
         self.agent_start_pos = agent_start_pos
         self.agent_start_dir = agent_start_dir
@@ -288,7 +300,8 @@ class FourDoorsEnv(MiniGridEnv):
         self.carrying = []
         self.actions = FourDoorsEnv.Actions
         self.action_space = spaces.Discrete(len(self.actions))
-
+        self.terminal_reward=terminal_reward
+        self.intermediate = intermediate
 
     def _gen_grid(self, width, height):
         # Create an empty grid
@@ -359,7 +372,7 @@ class FourDoorsEnv(MiniGridEnv):
             if fwd_cell != None and fwd_cell.type == 'goal':
                 info['success']=True
                 done = True
-                reward = 1000
+                reward = self.terminal_reward
         elif action == self.actions.right:
             self.agent_dir = (self.agent_dir + 1) % 4
 
@@ -370,11 +383,12 @@ class FourDoorsEnv(MiniGridEnv):
             if fwd_cell and fwd_cell.can_pickup():
                 self.carrying.append(fwd_cell.color)
                 self.grid.set(*fwd_pos, None)
-                reward = 2
+                if self.intermediate:
+                    reward = 2
         elif action == self.actions.toggle:
             if fwd_cell:
                 open = fwd_cell.toggle(self, fwd_pos)
-                if open:
+                if open and self.intermediate:
                     reward = 2
         elif self.step_count >= self.max_steps:
             done = True
@@ -387,7 +401,16 @@ class FourDoorsEnv(MiniGridEnv):
 class DoorEnv1(FourDoorsEnv):
     def __init__(self, **kwargs):
         super().__init__(size=9, **kwargs)
+
+class DoorEnv2(FourDoorsEnv):
+    def __init__(self, **kwargs):
+        super().__init__(size=9, terminal_reward=10, **kwargs)
+
 register(
     id='MiniGrid-FourDoor-v0',
     entry_point='gym_minigrid.envs:DoorEnv1'
+)
+register(
+    id='MiniGrid-10FourDoor-v0',
+    entry_point='gym_minigrid.envs:DoorEnv2'
 )

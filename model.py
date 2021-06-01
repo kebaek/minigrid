@@ -45,7 +45,7 @@ class QModel(nn.Module):
     def forward(self, obs):
         obs = obs.image.permute(0,3,1,2)
         obs = self.image_conv(obs)
-        return self.head(obs.view(obs.size(0), -1))
+        return self.head(obs.reshape(obs.size(0), -1))
 
 
 class ACModel(nn.Module, torch_ac.RecurrentACModel):
